@@ -1,6 +1,10 @@
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
+#include <FastLED.h>
+
+#define LED_PIN D6
+#define LEDS_QNT 8
 
 const char* ssid = "Arctic Monkeys"; //Enter SSID
 const char* password = "ityttmom0209"; //Enter Password
@@ -8,6 +12,7 @@ const char* websockets_server = "wss://gdddyr9xoe.execute-api.us-east-2.amazonaw
 
 using namespace websockets;
 
+CRGB leds[LEDS_QNT];
 WebsocketsClient client;
 int red_val;
 int green_val;
@@ -52,6 +57,8 @@ void onMessageCallback(WebsocketsMessage message) {
     Serial.println(green_val);
     Serial.print("Blue: ");
     Serial.println(blue_val);
+
+    changeLeds();
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -63,7 +70,19 @@ void onEventsCallback(WebsocketsEvent event, String data) {
     }
 }
 
+void changeLeds() {
+  Serial.println("Changing LEDs");
+
+  for (int i = 0; i < LEDS_QNT; i++) {
+    leds[i] = CRGB(red_val, green_val, blue_val);
+  }
+
+  FastLED.show();
+}
+
 void setup() {
+    FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LEDS_QNT);
+
     Serial.begin(115200);
     // Connect to wifi
     WiFi.begin(ssid, password);
