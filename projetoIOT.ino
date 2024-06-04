@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include <FastLED.h>
 
+#define LDR_PIN A0
 #define LED_PIN D6
 #define LEDS_QNT 8
 
@@ -17,6 +18,7 @@ WebsocketsClient client;
 int red_val;
 int green_val;
 int blue_val;
+int luminosity = 0;
 
 void onMessageCallback(WebsocketsMessage message) {
     StaticJsonDocument<384> doc;
@@ -82,10 +84,9 @@ void changeLeds() {
 
 void setup() {
     FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LEDS_QNT);
-
     Serial.begin(115200);
-    // Connect to wifi
     WiFi.begin(ssid, password);
+    pinMode(LDR_PIN, INPUT);
 
     // Wait some time to connect to wifi
     for(int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++) {
@@ -103,4 +104,11 @@ void setup() {
 
 void loop() {
     client.poll();
+
+    room_luminosity = analogRead(LDR_PIN);
+
+    Serial.print("Room luminosity: ");
+    Serial.println(room_luminosity);
+
+    delay(750);
 }
