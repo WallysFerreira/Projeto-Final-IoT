@@ -14,14 +14,24 @@ String device_name = "IOTTeste";
 
 using namespace websockets;
 
+struct Color {
+  int red;
+  int green;
+  int blue;
+};
+
 Adafruit_APDS9960 apds;
 CRGB leds[LEDS_QNT];
 WebsocketsClient client;
+/*
 int red_val;
 int green_val;
 int blue_val;
+*/
 float brightness_pct = 1.0;
 int room_luminosity = 0;
+int selected_color = 0;
+Color colors[4];
 
 void onMessageCallback(WebsocketsMessage message) {
     StaticJsonDocument<384> doc;
@@ -45,11 +55,18 @@ void onMessageCallback(WebsocketsMessage message) {
       if (attribute.equals("rgb")) {
         JsonArray value = doc["value"];
 
+        colors[0].red = value[0];
+        colors[0].green = value[1];
+        colors[0].blue = value[2];
+
+        /*
         red_val = value[0];
         green_val = value[1];
         blue_val = value[2];
+        */
 
-        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
+        //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
+        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + colors[0].red + "," + colors[0].green + "," + colors[0].blue + "]}}"));
       } else if (attribute.equals("power")) {
         int brightness = doc["value"];
 
@@ -59,18 +76,40 @@ void onMessageCallback(WebsocketsMessage message) {
       }
     } else {
         JsonArray rgb = doc["rgb"];
+        JsonArray rgb_history = doc["rgb_history"];
 
+        colors[0].red = rgb[0];
+        colors[0].green = rgb[1];
+        colors[0].blue = rgb[2];
+        
+        colors[1].red = rgb_history[0][0];
+        colors[1].green = rgb_history[0][1];
+        colors[1].blue = rgb_history[0][2];
+
+        colors[2].red = rgb_history[1][0];
+        colors[2].green = rgb_history[1][1];
+        colors[2].blue = rgb_history[1][2];
+
+        colors[3].red = rgb_history[2][0];
+        colors[3].green = rgb_history[2][1];
+        colors[3].blue = rgb_history[2][2];
+
+        /*
         red_val = rgb[0];
         green_val = rgb[1];
         blue_val = rgb[2];
+        */
     }
 
     Serial.print("Red: ");
-    Serial.println(red_val);
+    //Serial.println(red_val);
+    Serial.println(colors[0].red);
     Serial.print("Green: ");
-    Serial.println(green_val);
+    //Serial.println(green_val);
+    Serial.println(colors[0].green);
     Serial.print("Blue: ");
-    Serial.println(blue_val);
+    //Serial.println(blue_val);
+    Serial.println(colors[0].blue);
     Serial.print("brightness: ");
     Serial.print(brightness_pct * 100);
     Serial.println("%");
@@ -92,7 +131,7 @@ void changeLeds() {
   Serial.println("Changing LEDs");
 
   for (int i = 0; i < LEDS_QNT; i++) {
-    leds[i] = CRGB((int) (red_val * brightness_pct), (int) (green_val * brightness_pct), (int) (blue_val * brightness_pct));
+    leds[i] = CRGB((int) (colors[selected_color].red * brightness_pct), (int) (colors[selected_color].green * brightness_pct), (int) (colors[selected_color].blue * brightness_pct));
   }
 
   FastLED.show();
@@ -102,16 +141,38 @@ void handleGesture() {
     switch ( apds.readGesture() ) {
       case APDS9960_UP:
         if (brightness_pct < 100) brightness_pct += 1.0;
+
+        changeLeds();
+
         Serial.println("UP");
         break;
       case APDS9960_DOWN:
         if (brightness_pct > 0) brightness_pct -= 1.0;
+
+        changeLeds();
+
         Serial.println("DOWN");
         break;
       case APDS9960_LEFT:
+        if (selected_color == 0) {
+          selected_color = 3;
+        } else {
+          selected_color -= 1;
+        }
+
+        changeLeds();
+
         Serial.println("LEFT");
         break;
       case APDS9960_RIGHT:
+        if (selected_color == 3) {
+          selected_color = 0;
+        } else {
+          selected_color += 1;
+        }
+
+        changeLeds();
+
         Serial.println("RIGHT");
         break;
       /*
