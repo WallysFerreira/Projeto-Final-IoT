@@ -95,9 +95,11 @@ void changeLeds() {
 void handleGesture() {
     switch ( apds.readGesture() ) {
       case APDS9960_UP:
+        if (brightness_pct < 100) brightness_pct += 1.0;
         Serial.println("UP");
         break;
       case APDS9960_DOWN:
+        if (brightness_pct > 0) brightness_pct -= 1.0;
         Serial.println("DOWN");
         break;
       case APDS9960_LEFT:
@@ -150,7 +152,6 @@ void setup() {
 
 void loop() {
     client.poll();
-
 
     room_luminosity = analogRead(LDR_PIN);
 
