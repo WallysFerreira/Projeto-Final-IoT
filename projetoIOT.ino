@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 #include <FastLED.h>
+#include <Adafruit_APDS9960.h>
 
 #define LDR_PIN A0
 #define LED_PIN D6
@@ -13,12 +14,14 @@ const char* websockets_server = "wss://gdddyr9xoe.execute-api.us-east-2.amazonaw
 
 using namespace websockets;
 
+Adafruit_APDS9960 apds;
 CRGB leds[LEDS_QNT];
 WebsocketsClient client;
 int red_val;
 int green_val;
 int blue_val;
-int luminosity = 0;
+float brightness_pct = 1.0;
+int room_luminosity = 0;
 
 void onMessageCallback(WebsocketsMessage message) {
     StaticJsonDocument<384> doc;
@@ -44,6 +47,10 @@ void onMessageCallback(WebsocketsMessage message) {
         red_val = value[0];
         green_val = value[1];
         blue_val = value[2];
+      } else if (attribute.equals("power")) {
+        int brightness = doc["value"];
+
+        brightness_pct = (float) brightness / 100;
       }
     } else {
         JsonArray rgb = doc["rgb"];
@@ -59,6 +66,9 @@ void onMessageCallback(WebsocketsMessage message) {
     Serial.println(green_val);
     Serial.print("Blue: ");
     Serial.println(blue_val);
+    Serial.print("brightness: ");
+    Serial.print(brightness_pct * 100);
+    Serial.println("%");
 
     changeLeds();
 }
@@ -76,10 +86,37 @@ void changeLeds() {
   Serial.println("Changing LEDs");
 
   for (int i = 0; i < LEDS_QNT; i++) {
-    leds[i] = CRGB(red_val, green_val, blue_val);
+    leds[i] = CRGB((int) (red_val * brightness_pct), (int) (green_val * brightness_pct), (int) (blue_val * brightness_pct));
   }
 
   FastLED.show();
+}
+
+void handleGesture() {
+    switch ( apds.readGesture() ) {
+      case APDS9960_UP:
+        Serial.println("UP");
+        break;
+      case APDS9960_DOWN:
+        Serial.println("DOWN");
+        break;
+      case APDS9960_LEFT:
+        Serial.println("LEFT");
+        break;
+      case APDS9960_RIGHT:
+        Serial.println("RIGHT");
+        break;
+      /*
+      case DIR_NEAR:
+        Serial.println("NEAR");
+        break;
+      case DIR_FAR:
+        Serial.println("FAR");
+        break;
+      */
+      default:
+        Serial.println("NONE");
+    }
 }
 
 void setup() {
@@ -94,6 +131,15 @@ void setup() {
         delay(1000);
     }
 
+    if (apds.begin()) {
+      Serial.println("Sensor de gestos inicializado.");
+    } else {
+      Serial.println("Erro ao iniciar sensor de gestos");
+    }
+
+    // Start running the APDS-9960 gesture sensor engine
+    apds.enableGesture(true);
+
     // Setup Callbacks
     client.onMessage(onMessageCallback);
     client.onEvent(onEventsCallback);
@@ -105,10 +151,14 @@ void setup() {
 void loop() {
     client.poll();
 
+
     room_luminosity = analogRead(LDR_PIN);
 
     Serial.print("Room luminosity: ");
     Serial.println(room_luminosity);
 
-    delay(750);
+    // Apparently this is blocking
+    //handleGesture();
+
+    delay(890);
 }
