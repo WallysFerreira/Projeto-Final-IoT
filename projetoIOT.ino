@@ -11,7 +11,6 @@
 const char* ssid = "Arctic Monkeys"; //Enter SSID
 const char* password = "ityttmom0209"; //Enter Password
 String device_name = "IOTTeste";
-//const char* websockets_server = "wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=esp8266&name=IOTTeste"; //server adress and port
 
 
 using namespace websockets;
@@ -35,6 +34,7 @@ void onMessageCallback(WebsocketsMessage message) {
     if (err) {
       Serial.print("Deserialize error ");
       Serial.println(err.f_str());
+      return;
     }
 
     String requested_by = doc["requestedBy"];
@@ -49,10 +49,14 @@ void onMessageCallback(WebsocketsMessage message) {
         red_val = value[0];
         green_val = value[1];
         blue_val = value[2];
+
+        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
       } else if (attribute.equals("power")) {
         int brightness = doc["value"];
 
         brightness_pct = (float) brightness / 100;
+
+        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
       }
     } else {
         JsonArray rgb = doc["rgb"];
@@ -131,7 +135,6 @@ void setup() {
     pinMode(LDR_PIN, INPUT);
 
     String websockets_server = String("wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=" + WiFi.macAddress() + "&name=" + device_name);
-    //sprintf(websockets_server, "wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=%s&name=%s", WiFi.macAddress(), device_name);
 
     Serial.println(websockets_server);
 
