@@ -12,7 +12,6 @@ const char* ssid = "Arctic Monkeys"; //Enter SSID
 const char* password = "ityttmom0209"; //Enter Password
 String device_name = "IOTTeste";
 
-
 using namespace websockets;
 
 Adafruit_APDS9960 apds;
@@ -135,8 +134,6 @@ void setup() {
     pinMode(LDR_PIN, INPUT);
 
     String websockets_server = String("wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=" + WiFi.macAddress() + "&name=" + device_name);
-
-    Serial.println(websockets_server);
 
     for (int i = 0; i < 3; i++) {
       Serial.print("Meu identificador é: ");
