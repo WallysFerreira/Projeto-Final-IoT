@@ -10,7 +10,9 @@
 
 const char* ssid = "Arctic Monkeys"; //Enter SSID
 const char* password = "ityttmom0209"; //Enter Password
-const char* websockets_server = "wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=esp8266&name=IOTTeste"; //server adress and port
+String device_name = "IOTTeste";
+//const char* websockets_server = "wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=esp8266&name=IOTTeste"; //server adress and port
+
 
 using namespace websockets;
 
@@ -76,7 +78,8 @@ void onMessageCallback(WebsocketsMessage message) {
 void onEventsCallback(WebsocketsEvent event, String data) {
     if(event == WebsocketsEvent::ConnectionOpened) {
         Serial.println("Connnection Opened");
-        client.send("{\"action\":\"boardstatus\",\"data\":{\"boardID\":\"esp8266\"}}");
+        
+        client.send(String("{\"action\":\"boardstatus\",\"data\":{\"boardID\":\"" + WiFi.macAddress() + "\"}}"));
     } else if(event == WebsocketsEvent::ConnectionClosed) {
         Serial.println("Connnection Closed");
     }
@@ -127,6 +130,17 @@ void setup() {
     WiFi.begin(ssid, password);
     pinMode(LDR_PIN, INPUT);
 
+    String websockets_server = String("wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=" + WiFi.macAddress() + "&name=" + device_name);
+    //sprintf(websockets_server, "wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=%s&name=%s", WiFi.macAddress(), device_name);
+
+    Serial.println(websockets_server);
+
+    for (int i = 0; i < 3; i++) {
+      Serial.print("Meu identificador é: ");
+      Serial.println(WiFi.macAddress());
+      delay(600);
+    }
+
     // Wait some time to connect to wifi
     for(int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++) {
         Serial.print(".");
@@ -161,5 +175,5 @@ void loop() {
     // Apparently this is blocking
     //handleGesture();
 
-    delay(890);
+    delay(900);
 }
