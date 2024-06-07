@@ -7,9 +7,10 @@
 #define LDR_PIN A0
 #define LED_PIN D6
 #define LED_QNT 8
+#define WIFI_LENGTH 3
 
-const char* ssid = "Arctic Monkeys"; //Enter SSID
-const char* password = "ityttmom0209"; //Enter Password
+const char* ssid[] = {"Arctic Monkeys", "SENAC-Mesh", "Senac-Mesh"}; //Enter SSID
+const char* password[] = {"ityttmom0209", "09080706", "09080706"}; //Enter Password
 String device_name = "IOTTeste";
 
 using namespace websockets;
@@ -195,7 +196,7 @@ void handleGesture() {
 
 void setup() {
     Serial.begin(115200);
-    WiFi.begin(ssid, password);
+    
     pinMode(LDR_PIN, INPUT);
     pixels.begin();
 
@@ -207,10 +208,17 @@ void setup() {
       delay(600);
     }
 
+    for (int j = 0; j < WIFI_LENGTH; j++) {
+      WiFi.begin(ssid[j], password[j]);
     // Wait some time to connect to wifi
-    for(int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++) {
+      for(int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++) {
         Serial.print(".");
         delay(1000);
+      }
+
+      if (WiFi.status() == WL_CONNECTED) {
+        break;
+      }
     }
 
     if (apds.begin()) {
