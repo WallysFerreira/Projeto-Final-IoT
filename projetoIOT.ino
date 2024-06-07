@@ -28,7 +28,7 @@ int red_val;
 int green_val;
 int blue_val;
 */
-int brightness = 255;
+float brightness_pct = 1.0;
 int room_luminosity = 0;
 int selected_color = 0;
 Color colors[4];
@@ -68,7 +68,8 @@ void onMessageCallback(WebsocketsMessage message) {
 
         //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
       } else if (attribute.equals("power")) {
-        brightness = doc["value"];
+        int brightness = doc["value"];
+        brightness_pct = brightness / 100.0;
 
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
       }
@@ -128,7 +129,7 @@ void changeLeds(String requested_by) {
   Serial.println("Changing LEDs");
 
   for (int i = 0; i < LED_QNT; i++) {
-    pixels.setPixelColor(i, pixels.Color(colors[selected_color].red, colors[selected_color].green, colors[selected_color].blue));
+    pixels.setPixelColor(i, pixels.Color((int) (brightness_pct * colors[selected_color].red), (int) (brightness_pct * colors[selected_color].green), (int) (brightness_pct * colors[selected_color].blue)));
 
     pixels.show();
   }
