@@ -111,7 +111,7 @@ void onMessageCallback(WebsocketsMessage message) {
     Serial.print("brightness: ");
     Serial.println(brightness);
 
-    changeLeds();
+    changeLeds(requested_by);
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -124,7 +124,7 @@ void onEventsCallback(WebsocketsEvent event, String data) {
     }
 }
 
-void changeLeds() {
+void changeLeds(String requested_by) {
   Serial.println("Changing LEDs");
 
   for (int i = 0; i < LED_QNT; i++) {
@@ -133,7 +133,7 @@ void changeLeds() {
     pixels.show();
   }
 
-  client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
+  client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"rgb\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
 }
 
 void handleGesture() {
@@ -142,7 +142,7 @@ void handleGesture() {
         if ((brightness + 10) < 255) brightness += 10;
         else brightness = 255;
 
-        changeLeds();
+        changeLeds(String("gesture"));
 
         Serial.println("UP");
         break;
@@ -150,7 +150,7 @@ void handleGesture() {
         if ((brightness - 10) > 0) brightness -= 10;
         else brightness = 0;
 
-        changeLeds();
+        changeLeds("gesture");
 
         Serial.println("DOWN");
         break;
@@ -161,7 +161,7 @@ void handleGesture() {
           selected_color -= 1;
         }
 
-        changeLeds();
+        changeLeds("gesture");
 
         Serial.println("LEFT");
         break;
@@ -172,7 +172,7 @@ void handleGesture() {
           selected_color += 1;
         }
 
-        changeLeds();
+        changeLeds("gesture");
 
         Serial.println("RIGHT");
         break;
