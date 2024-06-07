@@ -9,8 +9,8 @@
 #define LED_QNT 8
 #define WIFI_LENGTH 3
 
-const char* ssid[] = {"Arctic Monkeys", "SENAC-Mesh", "Senac-Mesh"}; //Enter SSID
-const char* password[] = {"ityttmom0209", "09080706", "09080706"}; //Enter Password
+const char* ssid[] = {"SENAC-Mesh", "Senac-Mesh", "Arctic Monkeys"}; //Enter SSID
+const char* password[] = {"09080706", "09080706", "ityttmom0209"}; //Enter Password
 String device_name = "IOTTeste";
 
 using namespace websockets;
