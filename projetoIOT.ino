@@ -32,6 +32,7 @@ int blue_val;
 float brightness_pct = 1.0;
 int room_luminosity = 0;
 int selected_color = 0;
+int automatic = 0;
 Color colors[4];
 
 void onMessageCallback(WebsocketsMessage message) {
@@ -75,7 +76,10 @@ void onMessageCallback(WebsocketsMessage message) {
 
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
         changeLeds(requested_by, 0);
-      }
+      } else if (attribute.equals("automatic") {
+        automatic = doc["value"];
+        
+        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + automatic + "}}"));
     } else {
         JsonArray rgb = doc["rgb"];
         JsonArray rgb_history = doc["rgb_history"];
@@ -241,14 +245,21 @@ void setup() {
 void loop() {
     client.poll();
     pixels.clear();
-
     room_luminosity = analogRead(LDR_PIN);
-
+  
     Serial.print("Room luminosity: ");
     Serial.println(room_luminosity);
 
+    if (automatic) {
+      if (room_luminosity < 200) {
+        brightness_pct = 1.0;
+        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
+        changeLeds("null", 0);
+      }
+    }
+
     // Apparently this is blocking
-    //handleGesture();
+    handleGesture();
 
     delay(700);
 }
