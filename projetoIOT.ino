@@ -1,12 +1,12 @@
 #include <ArduinoWebsockets.h>
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
-#include <FastLED.h>
+#include <Adafruit_NeoPixel.h>
 #include <Adafruit_APDS9960.h>
 
 #define LDR_PIN A0
 #define LED_PIN D6
-#define LEDS_QNT 8
+#define LED_QNT 8
 
 const char* ssid = "Arctic Monkeys"; //Enter SSID
 const char* password = "ityttmom0209"; //Enter Password
@@ -21,14 +21,14 @@ struct Color {
 };
 
 Adafruit_APDS9960 apds;
-CRGB leds[LEDS_QNT];
+Adafruit_NeoPixel pixels(LED_QNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 WebsocketsClient client;
 /*
 int red_val;
 int green_val;
 int blue_val;
 */
-float brightness_pct = 1.0;
+int brightness = 255;
 int room_luminosity = 0;
 int selected_color = 0;
 Color colors[4];
@@ -68,9 +68,7 @@ void onMessageCallback(WebsocketsMessage message) {
         //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + colors[0].red + "," + colors[0].green + "," + colors[0].blue + "]}}"));
       } else if (attribute.equals("power")) {
-        int brightness = doc["value"];
-
-        brightness_pct = (float) brightness / 100;
+        brightness = doc["value"];
 
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
       }
@@ -111,8 +109,7 @@ void onMessageCallback(WebsocketsMessage message) {
     //Serial.println(blue_val);
     Serial.println(colors[0].blue);
     Serial.print("brightness: ");
-    Serial.print(brightness_pct * 100);
-    Serial.println("%");
+    Serial.println(brightness);
 
     changeLeds();
 }
@@ -130,24 +127,26 @@ void onEventsCallback(WebsocketsEvent event, String data) {
 void changeLeds() {
   Serial.println("Changing LEDs");
 
-  for (int i = 0; i < LEDS_QNT; i++) {
-    leds[i] = CRGB((int) (colors[selected_color].red * brightness_pct), (int) (colors[selected_color].green * brightness_pct), (int) (colors[selected_color].blue * brightness_pct));
-  }
+  for (int i = 0; i < LED_QNT; i++) {
+    pixels.setPixelColor(i, pixels.Color(colors[selected_color].red, colors[selected_color].green, colors[selected_color].blue));
 
-  FastLED.show();
+    pixels.show();
+  }
 }
 
 void handleGesture() {
     switch ( apds.readGesture() ) {
       case APDS9960_UP:
-        if (brightness_pct < 100) brightness_pct += 1.0;
+        if ((brightness + 10) < 255) brightness += 10;
+        else brightness = 255;
 
         changeLeds();
 
         Serial.println("UP");
         break;
       case APDS9960_DOWN:
-        if (brightness_pct > 0) brightness_pct -= 1.0;
+        if ((brightness - 10) > 0) brightness -= 10;
+        else brightness = 0;
 
         changeLeds();
 
@@ -189,10 +188,10 @@ void handleGesture() {
 }
 
 void setup() {
-    FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LEDS_QNT);
     Serial.begin(115200);
     WiFi.begin(ssid, password);
     pinMode(LDR_PIN, INPUT);
+    pixels.begin();
 
     String websockets_server = String("wss://gdddyr9xoe.execute-api.us-east-2.amazonaws.com/test/?type=board&ID=" + WiFi.macAddress() + "&name=" + device_name);
 
@@ -227,6 +226,7 @@ void setup() {
 
 void loop() {
     client.poll();
+    pixels.clear();
 
     room_luminosity = analogRead(LDR_PIN);
 
@@ -236,5 +236,5 @@ void loop() {
     // Apparently this is blocking
     //handleGesture();
 
-    delay(900);
+    delay(700);
 }
