@@ -66,12 +66,14 @@ void onMessageCallback(WebsocketsMessage message) {
         blue_val = value[2];
         */
 
+        changeLeds(requested_by, 1);
         //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
       } else if (attribute.equals("power")) {
         int brightness = doc["value"];
         brightness_pct = brightness / 100.0;
 
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
+        changeLeds(requested_by, 0);
       }
     } else {
         JsonArray rgb = doc["rgb"];
@@ -110,9 +112,9 @@ void onMessageCallback(WebsocketsMessage message) {
     //Serial.println(blue_val);
     Serial.println(colors[0].blue);
     Serial.print("brightness: ");
-    Serial.println(brightness);
+    Serial.print(brightness_pct);
+    Serial.println("%");
 
-    changeLeds(requested_by);
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -125,8 +127,9 @@ void onEventsCallback(WebsocketsEvent event, String data) {
     }
 }
 
-void changeLeds(String requested_by) {
+void changeLeds(String requested_by, int send_update) {
   Serial.println("Changing LEDs");
+  Serial.println(requested_by);
 
   for (int i = 0; i < LED_QNT; i++) {
     pixels.setPixelColor(i, pixels.Color((int) (brightness_pct * colors[selected_color].red), (int) (brightness_pct * colors[selected_color].green), (int) (brightness_pct * colors[selected_color].blue)));
@@ -134,24 +137,24 @@ void changeLeds(String requested_by) {
     pixels.show();
   }
 
-  client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"rgb\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
+  if (send_update) client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"rgb\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
 }
 
 void handleGesture() {
     switch ( apds.readGesture() ) {
       case APDS9960_UP:
-        if ((brightness + 10) < 255) brightness += 10;
-        else brightness = 255;
+        if ((brightness_pct + 5.0) < 100.0) brightness_pct += 5.0;
+        else brightness_pct = 100.0;
 
-        changeLeds(String("gesture"));
+        changeLeds(String("gesture"), 1);
 
         Serial.println("UP");
         break;
       case APDS9960_DOWN:
-        if ((brightness - 10) > 0) brightness -= 10;
-        else brightness = 0;
+        if ((brightness_pct - 5.0) > 0.0) brightness_pct -= 5.0;
+        else brightness_pct = 0.0;
 
-        changeLeds("gesture");
+        changeLeds(String("gesture"), 1);
 
         Serial.println("DOWN");
         break;
@@ -162,7 +165,7 @@ void handleGesture() {
           selected_color -= 1;
         }
 
-        changeLeds("gesture");
+        changeLeds(String("gesture"), 1);
 
         Serial.println("LEFT");
         break;
@@ -173,7 +176,7 @@ void handleGesture() {
           selected_color += 1;
         }
 
-        changeLeds("gesture");
+        changeLeds(String("gesture"), 1);
 
         Serial.println("RIGHT");
         break;
