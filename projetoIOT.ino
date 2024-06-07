@@ -58,6 +58,7 @@ void onMessageCallback(WebsocketsMessage message) {
         colors[0].red = value[0];
         colors[0].green = value[1];
         colors[0].blue = value[2];
+        selected_color = 0;
 
         /*
         red_val = value[0];
@@ -66,7 +67,6 @@ void onMessageCallback(WebsocketsMessage message) {
         */
 
         //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + red_val + "," + green_val + "," + blue_val + "]}}"));
-        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + colors[0].red + "," + colors[0].green + "," + colors[0].blue + "]}}"));
       } else if (attribute.equals("power")) {
         brightness = doc["value"];
 
@@ -132,6 +132,8 @@ void changeLeds() {
 
     pixels.show();
   }
+
+  client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
 }
 
 void handleGesture() {
