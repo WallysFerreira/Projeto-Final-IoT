@@ -35,6 +35,19 @@ int selected_color = 0;
 int automatic = 0;
 Color colors[4];
 
+void changeLeds(String requested_by, int send_update) {
+  Serial.println("Changing LEDs");
+  Serial.println(requested_by);
+
+  for (int i = 0; i < LED_QNT; i++) {
+    pixels.setPixelColor(i, pixels.Color((int) (brightness_pct * colors[selected_color].red), (int) (brightness_pct * colors[selected_color].green), (int) (brightness_pct * colors[selected_color].blue)));
+
+    pixels.show();
+  }
+
+  if (send_update) client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"rgb\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
+}
+
 void onMessageCallback(WebsocketsMessage message) {
     StaticJsonDocument<384> doc;
 
@@ -76,10 +89,11 @@ void onMessageCallback(WebsocketsMessage message) {
 
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
         changeLeds(requested_by, 0);
-      } else if (attribute.equals("automatic") {
+      } else if (attribute.equals("automatic")) {
         automatic = doc["value"];
         
         client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + automatic + "}}"));
+      }
     } else {
         JsonArray rgb = doc["rgb"];
         JsonArray rgb_history = doc["rgb_history"];
@@ -132,18 +146,6 @@ void onEventsCallback(WebsocketsEvent event, String data) {
     }
 }
 
-void changeLeds(String requested_by, int send_update) {
-  Serial.println("Changing LEDs");
-  Serial.println(requested_by);
-
-  for (int i = 0; i < LED_QNT; i++) {
-    pixels.setPixelColor(i, pixels.Color((int) (brightness_pct * colors[selected_color].red), (int) (brightness_pct * colors[selected_color].green), (int) (brightness_pct * colors[selected_color].blue)));
-
-    pixels.show();
-  }
-
-  if (send_update) client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"rgb\",\"value\":[" + colors[selected_color].red + "," + colors[selected_color].green + "," + colors[selected_color].blue + "]}}"));
-}
 
 void handleGesture() {
     switch ( apds.readGesture() ) {
@@ -253,13 +255,13 @@ void loop() {
     if (automatic) {
       if (room_luminosity < 200) {
         brightness_pct = 1.0;
-        client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
+        //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
         changeLeds("null", 0);
       }
     }
 
     // Apparently this is blocking
-    handleGesture();
+    //handleGesture();
 
     delay(700);
 }
