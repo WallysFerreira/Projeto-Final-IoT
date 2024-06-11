@@ -215,6 +215,9 @@ void setup() {
     }
 
     for (int j = 0; j < WIFI_LENGTH; j++) {
+      Serial.print("Trying ");
+      Serial.println(ssid[j]);
+
       WiFi.begin(ssid[j], password[j]);
     // Wait some time to connect to wifi
       for(int i = 0; i < 10 && WiFi.status() != WL_CONNECTED; i++) {
@@ -257,11 +260,17 @@ void loop() {
         brightness_pct = 1.0;
         //client.send(String("{\"action\":\"answerchangerequest\",\"data\":{\"controllerID\":\"" + requested_by + "\",\"confirmed\":true,\"attribute\":\"" + attribute + "\",\"value\":" + brightness + "}}"));
         changeLeds("null", 0);
+      } else {
+        brightness_pct = 0.0;
+
+        changeLeds("null", 0);
       }
     }
 
     // Apparently this is blocking
-    //handleGesture();
+    if (apds.gestureValid()) {
+      handleGesture();
+    }
 
     delay(700);
 }
